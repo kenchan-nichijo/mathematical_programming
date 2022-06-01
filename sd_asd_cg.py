@@ -29,15 +29,15 @@ def f(x, x_opt, Q):
 
 
 def grad(x, x_opt, Q):
- 	return 2*Q@(x-x_opt)
+ 	return 2 * Q @ (x-x_opt)
 
 
 # class for the steepest descent method
 class SD:
 	def __init__(self, x_opt, Q, epsilon):
-		self.epsilon = epsilon
 		self.x_opt = x_opt
 		self.Q = Q
+		self.epsilon = epsilon
 		self.f_val = []
 		self.itr = []
 
@@ -72,9 +72,9 @@ class SD:
 # class for the accelerated steepest descent method
 class ASD:
 	def __init__(self, x_opt, Q, epsilon, alpha, rho, tau):
-		self.epsilon = epsilon
 		self.x_opt = x_opt
 		self.Q = Q
+		self.epsilon = epsilon
 		self.alpha_0 = alpha
 		self.rho = rho
 		self.tau = []
@@ -97,10 +97,10 @@ class ASD:
 		return alpha
 	
 	def update(self, x_k):
-		y_k = x_k
 		k = 0
 		self.itr.append(k)
 		self.f_val.append(self.f(x_k)[0])
+		y_k = x_k
 
 		while np.linalg.norm(self.grad(x_k), 2) >= self.epsilon:
 			g_k = self.grad(x_k)
@@ -124,7 +124,49 @@ class ASD:
 
 			if k == 5000:
 				break
-			
+
+
+# class for the conjugate gradient method
+class CG:
+	def __init__(self, x_opt, Q, epsilon):
+		self.x_opt = x_opt
+		self.Q = Q
+		self.epsilon = epsilon
+		self.f_val = []
+		self.itr = []
+
+	def f(self, x):
+		return f(x, self.x_opt, self.Q)
+	
+	def grad(self, x):
+		return grad(x, self.x_opt, self.Q)
+	
+	def alpha(self, g, p):
+		return (g.T@p) / (p.T@self.Q@p) / 2
+
+	def update(self, x_k):
+		k = 0
+		self.itr.append(k)
+		self.f_val.append(self.f(x_k)[0])
+		g_k = self.grad(x_k)
+		p_k = - g_k
+
+		while np.linalg.norm(self.grad(x_k), 2) >= self.epsilon:
+			g_k = self.grad(x_k)
+			alpha_k = self.alpha(g_k, p_k)
+			x_next = x_k - alpha_k*p_k
+			g_next = self.grad(x_next)
+			p_next = - g_next + ((g_next.T@self.Q@p_k)/(p_k.T@self.Q@p_k))*p_k
+
+			k += 1
+			self.itr.append(k)
+			self.f_val.append(self.f(x_next)[0])
+			x_k = x_next
+			p_k = p_next
+
+			if k == 5000:
+				break
+
 
 def main():
 	seed = 50
@@ -140,12 +182,15 @@ def main():
 
 	sd = SD(x_opt, Q, epsilon)
 	asd = ASD(x_opt, Q, epsilon, alpha, rho, tau)
+	cg = CG(x_opt, Q, epsilon)
 	
 	sd.update(x_0)
 	asd.update(x_0)
+	cg.update(x_0)
 	
 	plt.plot(sd.itr, sd.f_val, "b", label=" SD")
 	plt.plot(asd.itr, asd.f_val, "r", label="ASD with restart")
+	plt.plot(cg.itr, cg.f_val, "g", label="CG")
 	plt.ylabel("Function value")
 	plt.xlabel("Iteration")
 	plt.legend()
