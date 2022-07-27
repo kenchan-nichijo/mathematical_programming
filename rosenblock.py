@@ -63,9 +63,6 @@ class SD:
 			self.f_val.append(self.f(x_next)[0])
 			x_k = x_next
 
-			if k == 5000:
-				break
-
 
 # class for accelerated steepest descent methods
 class ASD:
