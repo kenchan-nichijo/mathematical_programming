@@ -242,10 +242,10 @@ def main():
 	tau = 1
 	omega = 0.25
 
-	# np.random.seed(seed=5)
+	np.random.seed(seed=10)
 
-	# x_0 = np.random.rand(n,1) * 10
-	x_0 = np.ones((n,1)) * 2
+	x_0 = np.random.rand(n,1) * 10
+	# x_0 = np.ones((n,1)) * 2
 	H_0 = np.identity(n)
 
 	start = time.time()
@@ -289,8 +289,8 @@ def main():
 	plt.legend()
 	ax = plt.gca()
 	ax.set_yscale('log')
-	# plt.show()
-	plt.savefig('graph.svg')
+	plt.show()
+	# plt.savefig('graph.svg')
 
 
 if __name__ == '__main__':
