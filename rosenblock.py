@@ -4,21 +4,30 @@ import math
 import time
 
 
-def f(x, n):
-	f = 0
-	for i in range(1, n):
-		f = f + 100*(x[i]-x[i-1]**2)**2 + (1-x[i])**2
+def f(x):
+	# f = 0
+	# for i in range(1, n):
+	# 	f = f + 100*(x[i]-x[i-1]**2)**2 + (1-x[i])**2
+	xm = np.roll(x, 1)
+	ff = 100 * (x - xm**2)**2 + (1 - xm)**2
+	f = np.sum(ff[1:])
 	return f
 
 
 def grad(x, n):
-	g = []
-	g.append(-400 * x[0] * (x[1]-x[0]**2))
-	for i in range(1, n-1):
-		g.append(200*(x[i]-x[i-1]**2) - 2*(1-x[i]) - 400 * x[i] * (x[i+1]-x[i]**2))
-	g.append(200*(x[n-1]-x[n-2]**2) - 2*(1-x[n-1]))
-	g = np.array(g, dtype=float)
-
+	# g = []
+	# g.append(-400 * x[0] * (x[1]-x[0]**2))
+	# for i in range(1, n-1):
+	# 	g.append(200*(x[i]-x[i-1]**2) - 2*(1-x[i]) - 400 * x[i] * (x[i+1]-x[i]**2))
+	# g.append(200*(x[n-1]-x[n-2]**2) - 2*(1-x[n-1]))
+	# g = np.array(g, dtype=float)
+	g = np.zeros((n, 1))
+	xp = np.roll(x, -1)
+	xm = np.roll(x, 1)
+	g[0] = -400 * x[0] * (x[1] - x[0]**2) - 2 * (1 - x[0])
+	gg = 200 * (x - xm**2) - 2 * (1 - xm) - 400 * x * (xp - x**2)
+	g[1:] = gg[1:]
+	g[n-1] = 200 * (x[n-1] - x[n-2]**2)
 	return g
 
 
@@ -34,7 +43,7 @@ class SD:
 		self.itr = []
 
 	def f(self, x):
-		return f(x, self.n)
+		return f(x)
 	
 	def grad(self, x):
 		return grad(x, self.n)
@@ -50,7 +59,7 @@ class SD:
 	def update(self, x_k):
 		k = 0
 		self.itr.append(k)
-		self.f_val.append(self.f(x_k)[0])
+		self.f_val.append(self.f(x_k))
 
 		while np.linalg.norm(self.grad(x_k), 2) >= self.epsilon:
 			g_k = self.grad(x_k)
@@ -60,7 +69,7 @@ class SD:
 
 			k += 1
 			self.itr.append(k)
-			self.f_val.append(self.f(x_next)[0])
+			self.f_val.append(self.f(x_next))
 			x_k = x_next
 
 			if k == 5000:
@@ -81,7 +90,7 @@ class ASD:
 		self.itr = []
 
 	def f(self, x):
-		return f(x, self.n)
+		return f(x)
 	
 	def grad(self, x):
 		return grad(x, self.n)
@@ -98,7 +107,7 @@ class ASD:
 		y_k = x_k
 		k = 0
 		self.itr.append(k)
-		self.f_val.append(self.f(x_k)[0])
+		self.f_val.append(self.f(x_k))
 
 		while np.linalg.norm(self.grad(x_k), 2) >= self.epsilon:
 			g_k = self.grad(x_k)
@@ -117,7 +126,7 @@ class ASD:
 
 			k += 1
 			self.itr.append(k)
-			self.f_val.append(self.f(x_next)[0])
+			self.f_val.append(self.f(x_next))
 			x_k = x_next
 			y_k = y_next
 
@@ -134,7 +143,7 @@ class NonlinearCG:
 		self.itr = []
 
 	def f(self, x):
-		return f(x, self.n)
+		return f(x)
 	
 	def grad(self, x):
 		return grad(x, self.n)
@@ -155,7 +164,7 @@ class NonlinearCG:
 		k = 0
 		x_k = x_0
 		self.itr.append(k)		
-		self.f_val.append(self.f(x_k)[0])
+		self.f_val.append(self.f(x_k))
 		g_k = self.grad(x_k)
 		p_k = - g_k
 
@@ -169,7 +178,7 @@ class NonlinearCG:
 			p_next = - g_next + self.dy_beta(g_next, y_k, p_k)*p_k
 				
 			k += 1
-			self.f_val.append(self.f(x_next)[0])
+			self.f_val.append(self.f(x_next))
 			self.itr.append(k)
 
 			x_k = x_next
@@ -188,7 +197,7 @@ class QuasiNewton:
 		self.itr = []
 
 	def f(self, x):
-		return f(x, self.n)
+		return f(x)
 	
 	def grad(self, x):
 		return grad(x, self.n)
@@ -212,7 +221,7 @@ class QuasiNewton:
 		x_k = x_0
 		H_k = H_0
 		self.itr.append(k)
-		self.f_val.append(self.f(x_k)[0])
+		self.f_val.append(self.f(x_k))
 		g_k = self.grad(x_k)
 
 		while np.linalg.norm(self.grad(x_k), 2) >= self.epsilon:
@@ -227,7 +236,7 @@ class QuasiNewton:
 			H_next = H_k + self.bfgs(H_k, s_k, y_k)
 			
 			k += 1
-			self.f_val.append(self.f(x_next)[0])
+			self.f_val.append(self.f(x_next))
 			self.itr.append(k)
 
 			x_k = x_next
@@ -240,12 +249,12 @@ def main():
 	alpha = 1
 	rho = 0.9
 	tau = 1
-	omega = 0.25
+	omega = 0.5
 
-	np.random.seed(seed=10)
+	# np.random.seed(seed=10)
 
-	x_0 = np.random.rand(n,1) * 10
-	# x_0 = np.ones((n,1)) * 2
+	# x_0 = np.random.rand(n,1) * 10
+	x_0 = np.ones((n,1)) * 2
 	H_0 = np.identity(n)
 
 	start = time.time()
@@ -289,8 +298,8 @@ def main():
 	plt.legend()
 	ax = plt.gca()
 	ax.set_yscale('log')
-	plt.show()
-	# plt.savefig('graph.svg')
+	# plt.show()
+	plt.savefig('graph.svg')
 
 
 if __name__ == '__main__':
