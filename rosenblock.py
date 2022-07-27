@@ -24,11 +24,12 @@ def grad(x, n):
 
 # class for steepest descent methods
 class SD:
-	def __init__(self, n, epsilon, alpha, rho):
+	def __init__(self, n, epsilon, alpha, rho, omega):
 		self.n = n
 		self.epsilon = epsilon
 		self.alpha_0 = alpha
 		self.rho = rho
+		self.omega = omega
 		self.f_val = []
 		self.itr = []
 
@@ -41,7 +42,7 @@ class SD:
 	def backtracking(self, x, d):
 		alpha = self.alpha_0
 
-		while self.f(x + alpha*d) > (self.f(x) - 0.5*(np.linalg.norm(d, 2)**2)*alpha): 
+		while self.f(x + alpha*d) > (self.f(x) - self.omega*(np.linalg.norm(d, 2)**2)*alpha): 
 			alpha = self.rho * alpha
 		
 		return alpha
@@ -62,19 +63,20 @@ class SD:
 			self.f_val.append(self.f(x_next)[0])
 			x_k = x_next
 
-			if k == 1000:
+			if k == 5000:
 				break
 
 
 # class for accelerated steepest descent methods
 class ASD:
-	def __init__(self, n, epsilon, alpha, rho, tau):
+	def __init__(self, n, epsilon, alpha, rho, tau, omega):
 		self.n = n
 		self.epsilon = epsilon
 		self.alpha_0 = alpha
 		self.rho = rho
 		self.tau = []
 		self.tau.append(tau)
+		self.omega = omega
 		self.f_val = []
 		self.itr = []
 
@@ -87,7 +89,7 @@ class ASD:
 	def backtracking(self, y, d):
 		alpha = self.alpha_0
 		
-		while self.f(y + alpha*d) > (self.f(y) - 0.5*(np.linalg.norm(d, 2)**2)*alpha): 
+		while self.f(y + alpha*d) > (self.f(y) - self.omega*(np.linalg.norm(d, 2)**2)*alpha): 
 			alpha = self.rho * alpha
 		
 		return alpha
@@ -101,7 +103,7 @@ class ASD:
 		while np.linalg.norm(self.grad(x_k), 2) >= self.epsilon:
 			g_k = self.grad(x_k)
 			d_k = - g_k
-			alpha_k = self.backtracking(y_k, d_k)
+			alpha_k = self.backtracking(y_k, -self.grad(y_k))
 			x_next = y_k + alpha_k*d_k
 			
 			if self.f(x_next) <= self.f(x_k):
@@ -118,9 +120,6 @@ class ASD:
 			self.f_val.append(self.f(x_next)[0])
 			x_k = x_next
 			y_k = y_next
-
-			if k == 1000:
-				break
 
 
 # class for non-linear conjugate gradient methods
@@ -175,9 +174,6 @@ class NonlinearCG:
 
 			x_k = x_next
 			p_k = p_next
-
-			if k == 1000:
-				break
 
 
 # class for quasi-Newton methods
@@ -237,9 +233,6 @@ class QuasiNewton:
 			x_k = x_next
 			H_k = H_next
 
-			if k == 1000:
-				break
-
 
 def main():
 	n = 10
@@ -247,15 +240,16 @@ def main():
 	alpha = 1
 	rho = 0.9
 	tau = 1
-	omega = pow(10,-4)
+	omega = 0.25
 
 	np.random.seed(seed=10)
 
-	x_0 = np.random.rand(n,1)
+	x_0 = np.random.rand(n,1) * 10
+	# x_0 = np.ones((n,1)) * 2
 	H_0 = np.identity(n)
 
 	start = time.time()
-	sd = SD(n, epsilon, alpha, rho)
+	sd = SD(n, epsilon, alpha, rho, omega)
 	sd.update(x_0)
 	elapsed_time = time.time() - start
 	print ("sd_elapsed_time:{0}".format(elapsed_time) + "[sec]")
@@ -263,7 +257,7 @@ def main():
 	print("-----")
 
 	start = time.time()
-	asd = ASD(n, epsilon, alpha, rho, tau)
+	asd = ASD(n, epsilon, alpha, rho, tau, omega)
 	asd.update(x_0)
 	elapsed_time = time.time() - start
 	print ("asd_elapsed_time:{0}".format(elapsed_time) + "[sec]")
@@ -296,7 +290,7 @@ def main():
 	ax = plt.gca()
 	ax.set_yscale('log')
 	plt.show()
-	# plt.savefig('graph.png')
+	# plt.savefig('graph.svg')
 
 
 if __name__ == '__main__':
